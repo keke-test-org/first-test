@@ -23,6 +23,8 @@ public class CarControllerTest extends TestBase {
     protected static final String RESOURCE_LOCATION_PATTERN = "http://localhost/example/v1/cars/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
     private static final long CAPACITY = 5L;
+    
+    String magic = "asdfasdfasdf";
 
     @Autowired
     CarRepository carRepository;

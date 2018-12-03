@@ -1,17 +1,17 @@
 package com.khoubyari.example;
 
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 /*
  * This is the main Spring Boot application class. It configures Spring Boot, JPA, Swagger
@@ -27,8 +27,12 @@ public class Application extends SpringBootServletInitializer {
     private static final Class<Application> applicationClass = Application.class;
     private static final Logger log = LoggerFactory.getLogger(applicationClass);
 
+    @Autowired
+    private AmazonDynamoDB amazonDynamoDB;
+
 	public static void main(String[] args) {
-		SpringApplication.run(applicationClass, args);
+
+	    SpringApplication.run(applicationClass, args);
 	}
 
     @Override

@@ -5,37 +5,44 @@
 
 	<groupId>com.khoubyari</groupId>
 	<artifactId>spring-boot-rest-example</artifactId>
-	<version>0.5.0</version>
-	<packaging>war</packaging>
+	<version>0.7.2</version>
+	<packaging>jar</packaging>
 	<description>Example project demonstrating REST APIs implemented using Spring Boot, in-memory database, embedded Tomcat, Swagger, JsonPath, Hamcrest and MockMVC</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.9.RELEASE</version>
+		<version>2.0.3.RELEASE</version>
 	</parent>
 
 	<properties>
 		<start-class>com.khoubyari.example.Application</start-class>
+		<aws.s3.region>us-west-2</aws.s3.region>
+		<dynamodblocal.port>8000</dynamodblocal.port>
 	</properties>
 
 	<dependencies>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-actuator</artifactId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- Metrics: Micormeter core dependecy & prometheus registry  -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 
 		<!-- web development, including Tomcat and spring-webmvc -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-
-		<!-- Spring security -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
 		<dependency>
@@ -54,6 +61,19 @@
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<version>1.4.193</version>
+		</dependency>
+
+		<!-- dynamodb data access abstraction -->
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-dynamodb</artifactId>
+			<version>1.11.34</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.derjust</groupId>
+			<artifactId>spring-data-dynamodb</artifactId>
+			<version>5.0.2</version>
 		</dependency>
 
 		<!-- spring-test, hamcrest, ... -->
@@ -132,6 +152,103 @@
 				<configuration>
 					<addResources>false</addResources>
 				</configuration>
+			</plugin>
+
+			<!-- Download DynamoDB local for local unit testing. Based on: https://goo.gl/8hFpdU -->
+
+			<plugin>
+				<groupId>com.googlecode.maven-download-plugin</groupId>
+				<artifactId>download-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<id>install-dynamodb_local</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>wget</goal>
+						</goals>
+						<configuration>
+							<url>https://s3-${aws.s3.region}.amazonaws.com/dynamodb-local/dynamodb_local_latest.zip</url>
+							<unpack>true</unpack>
+							<outputDirectory>${project.build.directory}/dynamodb</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Start DynamoDB locally -->
+
+			<plugin>
+				<groupId>com.bazaarvoice.maven.plugins</groupId>
+				<artifactId>process-exec-maven-plugin</artifactId>
+				<version>0.7</version>
+				<executions>
+					<execution>
+						<id>dynamodb_local</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>start</goal>
+						</goals>
+						<configuration>
+							<name>dynamodb_local</name>
+							<!--
+                            We need to let DynamoDB finish starting, but don't have
+                            a good semamore.  It's pretty quick to start, so 1 second
+                            should suffice.
+                            -->
+							<waitAfterLaunch>1</waitAfterLaunch>
+							<arguments>
+								<argument>java</argument>
+								<argument>-Djava.library.path=dynamodb/DynamoDBLocal_lib</argument>
+								<argument>-jar</argument>
+								<argument>dynamodb/DynamoDBLocal.jar</argument>
+								<!--
+                                Use the port that was reserved in step 2
+                                -->
+								<argument>-port</argument>
+								<argument>${dynamodblocal.port}</argument>
+								<!--
+                                You run your tests in parallel, right?
+                                -->
+								<argument>-sharedDb</argument>
+								<!--
+                                Remove this to keep data between restarts of the process.
+                                -->
+								<argument>-inMemory</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>com.bazaarvoice.maven.plugins</groupId>
+				<artifactId>process-exec-maven-plugin</artifactId>
+				<version>0.7</version>
+				<executions>
+					<execution>
+						<id>dynamodb_local</id>
+						<phase>test-compile</phase>
+						<!--<phase>pre-integration-test</phase>-->
+						<goals>
+							<goal>start</goal>
+						</goals>
+						<configuration>
+							<name>dynamodb_local</name>
+							<waitAfterLaunch>1</waitAfterLaunch>
+							<arguments>
+								<argument>java</argument>
+								<argument>-Djava.library.path=dynamodb/DynamoDBLocal_lib</argument>
+								<argument>-jar</argument>
+								<argument>dynamodb/DynamoDBLocal.jar</argument>
+								<argument>-port</argument>
+								<argument>${dynamodblocal.port}</argument>
+								<argument>-sharedDb</argument>
+								<argument>-inMemory</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

@@ -8,13 +8,16 @@ This application is packaged as a war which has Tomcat 8 embedded. No Tomcat or 
 
 * Clone this repository 
 * Make sure you are using JDK 1.8 and Maven 3.x
-* You can build the project and run the tests by running ```mvn clean package```
+* You can now build the project and run the tests by running ```mvn clean package```
+* **_NEW:_** This sample project has a new ```/cars``` service backed by Amazon **DynamoDB**. Running in "test" profile means you have to run DynamoDB locally (and create the ```Car``` table) before running this project. 
+  * The maven build downloads and runs DynamoDB locally for the the **unit tests** only. For unit tests you don't have to run DynamoDB separately. 
+  * To try the new ```/cars``` API on the running server you need to first run DynamoDB locally:
+    * Install and run following these instructions: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
+    * Create the ```Car``` table using the [AWS cli](https://docs.aws.amazon.com/cli/latest/userguide/installing.html) command:
+      * ```aws dynamodb create-table --table-name Car --attribute-definitions AttributeName=Id,AttributeType=S --key-schema AttributeName=Id,KeyType=HASH --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --endpoint-url http://localhost:8000```
 * Once successfully built, you can run the service by one of these two methods:
-```
-        java -jar -Dspring.profiles.active=test target/spring-boot-rest-example-0.5.0.war
-or
-        mvn spring-boot:run -Drun.arguments="spring.profiles.active=test"
-```
+  * ```java -jar -Dspring.profiles.active=test target/spring-boot-rest-example-0.7.2.jar```
+  * ```mvn spring-boot:run -Drun.arguments="spring.profiles.active=test"```
 * Check the stdout or boot_example.log file to make sure no exceptions are thrown
 
 Once the application runs you should see something like this
@@ -28,31 +31,33 @@ Once the application runs you should see something like this
 
 The service is just a simple hotel review REST service. It uses an in-memory database (H2) to store the data. You can also do with a relational database like MySQL or PostgreSQL. If your database connection properties work, you can call some REST endpoints defined in ```com.khoubyari.example.api.rest.hotelController``` on **port 8090**. (see below)
 
+The updated version also adds another simple REST service for cars that is backed by **DynamoDB**. Once you set up DynamoDB locally (or configure remote access in the application.yml file), you can run the service and try both the /hotels (relational DB backing) and the /cars (DynamoDB backing). 
+
 More interestingly, you can start calling some of the operational endpoints (see full list below) like ```/metrics``` and ```/health``` (these are available on **port 8091**)
 
 You can use this sample service to understand the conventions and configurations that allow you to create a DB-backed RESTful service. Once you understand and get comfortable with the sample app you can add your own services following the same patterns as the sample service.
  
 Here is what this little application demonstrates: 
 
-* Full integration with the latest **Spring** Framework: inversion of control, dependency injection, etc.
+* Full integration with the latest **Spring Boot** Framework: inversion of control, dependency injection, etc.
 * Packaging as a single war with embedded container (tomcat 8): No need to install a container separately on the host just run using the ``java -jar`` command
 * Demonstrates how to set up healthcheck, metrics, info, environment, etc. endpoints automatically on a configured port. Inject your own health / metrics info with a few lines of code.
 * Writing a RESTful service using annotation: supports both XML and JSON request / response; simply use desired ``Accept`` header in your request
 * Exception mapping from application exceptions to the right HTTP response with exception details in the body
-* *Spring Data* Integration with JPA/Hibernate with just a few lines of configuration and familiar annotations. 
-* Automatic CRUD functionality against the data source using Spring *Repository* pattern
+* *Spring Data* (JPA) Integration with JPA/Hibernate with just a few lines of configuration and familiar annotations. 
+* *DynamoDB* integration * Automatic CRUD functionality against the data source using Spring *Repository* pattern (for both JPA and DynamoDB)
 * Demonstrates MockMVC test framework with associated libraries
-* All APIs are "self-documented" by Swagger2 using annotations 
+* All APIs are "self-documented" by *Swagger2* using annotations 
 
 Here are some endpoints you can call:
 
 ### Get information about system health, configurations, etc.
 
 ```
-http://localhost:8091/env
-http://localhost:8091/health
-http://localhost:8091/info
-http://localhost:8091/metrics
+http://localhost:8091/actuator/env
+http://localhost:8091/actuator/health
+http://localhost:8091/actuator/info
+http://localhost:8091/actuator/metrics
 ```
 
 ### Create a hotel resource
@@ -81,6 +86,8 @@ http://localhost:8090/example/v1/hotels?page=0&size=10
 Response: HTTP 200
 Content: paginated list 
 ```
+
+_Note: after upgrading to Spring Boot 2.0, the paginated JSON has some redundant information in it (see https://goo.gl/42UPmZ and https://goo.gl/HbLTTh)_
 
 ### Update a hotel resource
 
@@ -161,13 +168,13 @@ spring:
 
 
 hotel.service:
-  name: 'test profile:'
+  name: 'mysql profile:'
 ```
 
 ### Then run is using the 'mysql' profile:
 
 ```
-        java -jar -Dspring.profiles.active=mysql target/spring-boot-rest-example-0.5.0.war
+        java -jar -Dspring.profiles.active=mysql target/spring-boot-rest-example-0.7.2.jar
 or
         mvn spring-boot:run -Drun.jvmArguments="-Dspring.profiles.active=mysql"
 ```
@@ -179,10 +186,8 @@ Run the service with these command line options:
 ```
 mvn spring-boot:run -Drun.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
 or
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -Dspring.profiles.active=test -Ddebug -jar target/spring-boot-rest-example-0.5.0.war
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -Dspring.profiles.active=test -Ddebug -jar target/spring-boot-rest-example-0.60.jar
 ```
 and then you can connect to it remotely using your IDE. For example, from IntelliJ You have to add remote debug configuration: Edit configuration -> Remote.
 
 # Questions and Comments: khoubyari@gmail.com
-
-

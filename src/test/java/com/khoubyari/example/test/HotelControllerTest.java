@@ -25,6 +25,8 @@ public class HotelControllerTest extends TestBase {
 
     @InjectMocks
     HotelController controller;
+    
+    String test = "test";
 
 
     //@Test

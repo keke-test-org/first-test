@@ -25,6 +25,7 @@ public class CarControllerTest extends TestBase {
     private static final long CAPACITY = 5L;
     
     String magic = "asdfasdfasdf";
+    Long magicNumbre = 234;
 
     @Autowired
     CarRepository carRepository;
